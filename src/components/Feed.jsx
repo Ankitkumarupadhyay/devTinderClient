@@ -10,6 +10,7 @@ import { BASE_URL } from "../utils/url";
 
 const Feed = () => {
   const feed = useSelector((store) => store.feed);
+  // console.log(feed)
   const dispatch = useDispatch();
   const navigate = useNavigate();
 

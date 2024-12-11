@@ -9,6 +9,7 @@ import { useState } from "react";
 
 function UsersCard({ user }) {
   const { _id, firstName, lastName, gender, age, about, photoUrl } = user;
+  // console.log(photoUrl)
   const[showButton,setShowButton]=useState(false)
 
   const navigate = useNavigate();
@@ -29,9 +30,9 @@ function UsersCard({ user }) {
     }
   };
 
-  if (location.pathname != "/profile") {
-    setShowButton(true)
-  }
+  // if (location.pathname != "/profile") {
+  //   setShowButton(true)
+  // }
 
   return (
     <div className="card h-[500px] bg-base-300 w-96 shadow-xl">
@@ -44,7 +45,8 @@ function UsersCard({ user }) {
         {age && gender && <p>{`${gender} (${age})`}</p>}
         <p>{about}</p>
 
-      {showButton && <div className="card-actions justify-center mt-4">
+      {/* {showButton && */}
+       <div className="card-actions justify-center mt-4">
           <button
             className="btn btn-primary"
             onClick={() => handleFeed("ignored", _id)}
@@ -57,7 +59,8 @@ function UsersCard({ user }) {
           >
             Interested
           </button>
-        </div>}
+        </div>
+        {/* } */}
       </div>
     </div>
   );
