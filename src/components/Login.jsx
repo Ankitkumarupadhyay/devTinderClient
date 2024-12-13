@@ -88,7 +88,7 @@ function Login() {
       }
     } catch (err) {
       // setError(err?.response?.data?.message || "⚠️ Something went wrong!");
-      toast.error(err.response.data)
+      toast.error(err.message)
       
     }
   };
