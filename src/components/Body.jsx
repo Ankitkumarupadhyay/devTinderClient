@@ -4,8 +4,8 @@ import Footer from "./Footer";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 import axios from "axios";
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { addUser } from "../store/userSlice";
 import { BASE_URL } from "../utils/url";
 
@@ -22,12 +22,11 @@ function Body() {
         if (user) return;
         // Only fetch if it's not the forget password route
         if (location.pathname === "/forgetpassword") return;
-        const res = await axios.get(
-          `${BASE_URL}/profile/view`,
-          {
-            withCredentials: true,
-          }
-        );
+        if (location.pathname === "/login") return;
+        if (location.pathname === "/signup") return;
+        const res = await axios.get(`${BASE_URL}/profile/view`, {
+          withCredentials: true,
+        });
         // console.log(res.data)
 
         if (res.status === 200) {
@@ -36,7 +35,7 @@ function Body() {
       } catch {
         // Redirect to login only if it's not the forget password route
         if (location.pathname !== "/forgetpassword") {
-          navigate("/login");
+          navigate("/signup");
         }
       }
     };
@@ -45,9 +44,12 @@ function Body() {
 
   return (
     <div>
-      <ToastContainer/>
+      <ToastContainer />
       <Navbar />
-      <Outlet />
+      <div className="min-h-[80vh]">
+        <Outlet />
+      </div>
+
       <Footer />
     </div>
   );
