@@ -18,12 +18,9 @@ const Feed = () => {
     const getFeed = async () => {
       // if (feed) return;
       try {
-        const res = await axios.get(
-           `${BASE_URL}/user/feed`,
-          {
-            withCredentials: true,
-          }
-        );
+        const res = await axios.get(`${BASE_URL}/user/feed`, {
+          withCredentials: true,
+        });
         // console.log(res.data)
 
         dispatch(addFeed(res?.data));
@@ -37,7 +34,11 @@ const Feed = () => {
   if (!feed) return <Loader />;
 
   if (feed.length <= 0)
-    return  <h1 className="flex min-h-[70vh] justify-center my-10">No new users founds!</h1>;
+    return (
+      <h1 className="flex min-h-[70vh] justify-center my-10">
+        No new users founds!
+      </h1>
+    );
 
   return (
     feed && (

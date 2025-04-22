@@ -164,7 +164,11 @@ const Signup = () => {
                 className="btn btn-primary "
                 type="submit"
               >
-                {formik.isSubmitting ? "loading..." : "SignUp"}
+                {formik.isSubmitting ? (
+                  <span className="loading loading-spinner text-info"></span>
+                ) : (
+                  "SignUp"
+                )}
               </button>
             </div>
             <Link to={"/login"}>

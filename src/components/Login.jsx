@@ -33,6 +33,7 @@ function Login() {
       });
 
       if (res.status === 200) {
+        localStorage.setItem("tinderUser", JSON.stringify(res.data.data));
         dispatch(addUser(res.data.data));
         navigate("/");
         toast.success(res.data.message);
@@ -108,7 +109,11 @@ function Login() {
 
             <div className="card-actions justify-center mt-4">
               <button className="btn btn-primary" type="submit">
-                Login
+                {formik.isSubmitting ? (
+                  <span className="loading loading-spinner text-info"></span>
+                ) : (
+                  "Login"
+                )}
               </button>
             </div>
             <p

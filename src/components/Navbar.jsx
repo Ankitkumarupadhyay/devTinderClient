@@ -5,26 +5,37 @@ import { Link, useNavigate } from "react-router-dom";
 import { removeUser } from "../store/userSlice";
 import { BASE_URL } from "../utils/url";
 import { toast } from "react-toastify";
+import { useEffect, useState } from "react";
 
 function Navbar() {
-  const user = useSelector((store) => store.user);
-  // console.log(user)
+  const storeUser = useSelector((store) => store.user);
+  const [user, setuser] = useState(
+    JSON.parse(localStorage.getItem("tinderUser"))
+  );
+  useEffect(() => {
+    const localUser = JSON.parse(localStorage.getItem("tinderUser"));
+    setuser(localUser);
+  }, [storeUser]);
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
-      await axios.post(
+      const response = await axios.post(
         `${BASE_URL}/logout`,
         {},
         { withCredentials: true }
       );
       //if logged out successfully remove the user from store and redirect to login page
-      dispatch(removeUser());
-      toast.success("Logout successfull")
-      navigate("/login");
-    } catch(err) {
-      toast.error(err.message)
+      if (response.status === 200) {
+        dispatch(removeUser());
+        localStorage.removeItem("tinderUser");
+        toast.success("Logout successfull");
+        navigate("/login");
+      }
+    } catch (err) {
+      toast.error(err.message || "Logout failed");
       navigate("/error");
     }
   };
