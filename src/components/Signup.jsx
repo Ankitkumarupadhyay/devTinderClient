@@ -10,9 +10,11 @@ import EyeOpen from "../assets/icons/EyeOpen";
 import EyeClose from "../assets/icons/EyeClose";
 import EmailSVG from "../assets/icons/Email";
 import imageCompression from "browser-image-compression";
+import userProfile from "../assets/images/userProfile.png";
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [imageUrl, setImageUrl] = useState("");
   const navigate = useNavigate();
 
   const initialValues = {
@@ -62,8 +64,18 @@ const Signup = () => {
     onSubmit: (values) => handleSignUp(values),
   });
 
+  const handleImageUpload = (e) => {
+    formik.setFieldValue("photoUrl", e.currentTarget.files[0]);
+    if (e.currentTarget.files[0]) {
+      const localUrl = URL.createObjectURL(e.currentTarget.files[0]);
+      setImageUrl(localUrl);
+    } else {
+      setImageUrl("");
+    }
+  };
+
   return (
-    <div className="flex my-10 justify-center">
+    <div className="flex my-10 justify-center gap-2 flex-wrap">
       <div className="card bg-base-300 w-96 shadow-xl">
         <div className="card-body">
           <h2 className="card-title justify-center text-2xl font-bold">
@@ -107,9 +119,7 @@ const Signup = () => {
                 name="photoUrl"
                 type="file"
                 className="grow cursor-pointer"
-                onChange={(e) => {
-                  formik.setFieldValue("photoUrl", e.currentTarget.files[0]);
-                }}
+                onChange={(e) => handleImageUpload(e)}
                 accept="image/*"
               />
             </label>
@@ -177,6 +187,22 @@ const Signup = () => {
               </p>
             </Link>
           </form>
+        </div>
+      </div>
+      <div className="card bg-base-300 w-96 shadow-xl">
+        <div className="card-body">
+          <div className="w-full h-[50%] flex justify-center items-center">
+            <img
+              src={imageUrl ? imageUrl : userProfile}
+              alt="user"
+              className="object-contain rounded-md "
+            />
+          </div>
+          <div className="p-3 flex justify-center items-center">
+            <button className="p-2 m-2 w-[80%] rounded-md bg-white text-black font-bold">
+              Continue with Google
+            </button>
+          </div>
         </div>
       </div>
     </div>
