@@ -1,12 +1,9 @@
 import React, { useState } from "react";
 import Navbar from "./Navbar";
-import axios, { AxiosError } from "axios";
 import { useNavigate, useParams } from "react-router-dom";
-import { BASE_URL } from "../utils/url";
-
-interface ErrorResponse {
-  message?: string;
-}
+import { useResetPasswordMutation } from "../store/tinderApi";
+import { Lock, ArrowRight, Sparkles, AlertCircle } from "lucide-react";
+import { toast } from "react-toastify";
 
 function ResetPassword(): React.ReactElement {
   const navigate = useNavigate();
@@ -16,87 +13,126 @@ function ResetPassword(): React.ReactElement {
   const [passwordConfirm, setPasswordConfirm] = useState<string>("");
   const [error, setError] = useState<string>("");
 
+  const [resetPasswordMutation, { isLoading }] = useResetPasswordMutation();
+
   const resetPassword = async (): Promise<void> => {
     try {
       setError("");
-      const res = await axios.patch(
-        `${BASE_URL}/resetpassword/${resetToken || ""}`,
-        { password, passwordConfirm },
-        { withCredentials: true }
-      );
-
-      if (res.status === 200) {
-        navigate("/");
-        setPassword("");
-        setPasswordConfirm("");
+      if (password !== passwordConfirm) {
+        setError("⚠️ Passwords do not match!");
+        return;
       }
+      
+      await resetPasswordMutation({
+        token: resetToken || "",
+        body: { password, passwordConfirm },
+      }).unwrap();
+
+      toast.success("Password reset successful!");
+      setPassword("");
+      setPasswordConfirm("");
+      navigate("/login");
     } catch (err) {
-      const axiosError = err as AxiosError<ErrorResponse>;
-      setError(axiosError?.response?.data?.message || "⚠️ Something went wrong!");
+      const errorPayload = err as any;
+      setError(errorPayload?.data?.message || "⚠️ Something went wrong!");
     }
   };
 
   return (
-    <div>
+    <div className="bg-[#0B1120] text-slate-100 min-h-screen flex flex-col relative overflow-hidden">
+      
       <Navbar />
-      <div className="my-20 mx-auto max-w-xl">
-        <h1 className="text-blue-800 font-extrabold text-xl text-center mb-10">
-          Reset Password
-        </h1>
-        <label className="my-1 font-bold text-lg">Password:</label>
-        <label className="input input-bordered flex items-center gap-2 mb-6 mt-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 16 16"
-            fill="currentColor"
-            className="h-4 w-4 opacity-70"
-          >
-            <path
-              fillRule="evenodd"
-              d="M14 6a4 4 0 0 1-4.899 3.899l-1.955 1.955a.5.5 0 0 1-.353.146H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2.293a.5.5 0 0 1 .146-.353l3.955-3.955A4 4 0 1 1 14 6Zm-4-2a.75.75 0 0 0 0 1.5.5.5 0 0 1 .5.5.75.75 0 0 0 1.5 0 2 2 0 0 0-2-2Z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <input
-            type="password"
-            className="grow"
-            placeholder="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </label>
 
-        <label className="my-1 font-bold text-lg">Password Confirm:</label>
-        <label className="input input-bordered flex items-center gap-2 mb-5 mt-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 16 16"
-            fill="currentColor"
-            className="h-4 w-4 opacity-70"
-          >
-            <path
-              fillRule="evenodd"
-              d="M14 6a4 4 0 0 1-4.899 3.899l-1.955 1.955a.5.5 0 0 1-.353.146H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2.293a.5.5 0 0 1 .146-.353l3.955-3.955A4 4 0 1 1 14 6Zm-4-2a.75.75 0 0 0 0 1.5.5.5 0 0 1 .5.5.75.75 0 0 0 1.5 0 2 2 0 0 0-2-2Z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <input
-            type="password"
-            className="grow"
-            placeholder="password Confirm"
-            required
-            value={passwordConfirm}
-            onChange={(e) => setPasswordConfirm(e.target.value)}
-          />
-        </label>
-        {error && <p className=" text-red-600 mt-3">{error}</p>}
-        <div className="card-actions justify-center mt-4">
-          <button className="btn btn-primary" onClick={() => resetPassword()}>
-            Reset Password
-          </button>
+      {/* Background aurora mesh orbs */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 opacity-25">
+        <div className="absolute top-1/3 left-1/3 w-[350px] h-[350px] rounded-full bg-indigo-600 blur-[120px] animate-pulse"></div>
+        <div className="absolute bottom-1/3 right-1/3 w-[400px] h-[400px] rounded-full bg-pink-600 blur-[140px]"></div>
+      </div>
+
+      {/* Core card layout */}
+      <div className="flex-grow flex items-center justify-center px-4 relative z-10 py-12">
+        <div className="w-full max-w-md bg-[#161B22]/60 border border-white/10 rounded-2xl p-8 sm:p-10 shadow-2xl backdrop-blur-md text-left">
+          
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-xs font-semibold text-indigo-300 mb-4">
+              <Sparkles size={12} className="text-pink-400" />
+              <span>Security Validation</span>
+            </div>
+            <h2 className="text-3xl font-black text-white tracking-tight">Reset Password</h2>
+            <p className="text-slate-400 text-sm mt-2">
+              Enter your new developer account password below to finish recovery.
+            </p>
+          </div>
+
+          {/* Form input fields */}
+          <div className="flex flex-col gap-5">
+            
+            {/* Password input */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-slate-300">New Password</label>
+              <div className="relative flex items-center">
+                <span className="absolute left-3 text-slate-400">
+                  <Lock size={16} />
+                </span>
+                <input
+                  type="password"
+                  className="w-full bg-[#0F172A]/80 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder-slate-500 outline-none focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 transition-all"
+                  placeholder="••••••••••••"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Password confirm input */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-slate-300">Confirm New Password</label>
+              <div className="relative flex items-center">
+                <span className="absolute left-3 text-slate-400">
+                  <Lock size={16} />
+                </span>
+                <input
+                  type="password"
+                  className="w-full bg-[#0F172A]/80 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder-slate-500 outline-none focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 transition-all"
+                  placeholder="••••••••••••"
+                  required
+                  value={passwordConfirm}
+                  onChange={(e) => setPasswordConfirm(e.target.value)}
+                />
+              </div>
+              {error && (
+                <div className="flex items-center gap-1.5 text-red-400 text-xs mt-1.5">
+                  <AlertCircle size={14} />
+                  <span>{error}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Action submit button */}
+            <div className="mt-4 flex flex-col gap-4">
+              <button 
+                disabled={isLoading}
+                className="w-full btn btn-primary bg-gradient-to-r from-violet-600 to-indigo-600 hover:opacity-95 border-none py-3 rounded-xl text-sm font-bold text-white shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2 group transition-all" 
+                onClick={() => resetPassword()}
+              >
+                {isLoading ? (
+                  <span className="loading loading-spinner text-white"></span>
+                ) : (
+                  <>
+                    <span>Reset Password</span>
+                    <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+                  </>
+                )}
+              </button>
+            </div>
+
+          </div>
+
         </div>
       </div>
+
     </div>
   );
 }

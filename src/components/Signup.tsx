@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import axios, { AxiosError } from "axios";
-import { useFormik } from "formik";
-import { BASE_URL } from "../utils/url";
+import { useSignupMutation } from "../store/tinderApi";
 import { toast } from "react-toastify";
+import { useFormik as useFormikHook } from "formik";
 import { signUpValidation } from "../utils/yupValidation";
 import { Link, useNavigate } from "react-router-dom";
 import imageCompression from "browser-image-compression";
@@ -25,6 +24,7 @@ const Signup = (): React.ReactElement => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [imageUrl, setImageUrl] = useState<string>("");
   const navigate = useNavigate();
+  const [signup] = useSignupMutation();
 
   const initialValues: SignUpValues = {
     firstName: "",
@@ -56,23 +56,18 @@ const Signup = (): React.ReactElement => {
       formData.append("password", values.password || "");
       formData.append("photoUrl", compressedFile);
 
-      const res = await axios.post<SignUpResponse>(`${BASE_URL}/signup`, formData, {
-        withCredentials: true,
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const res = await signup(formData).unwrap() as SignUpResponse;
 
-      if (res.status === 200) {
-        toast.success(res.data.message);
-        navigate("/login");
-      }
+      toast.success(res.message);
+      navigate("/login");
     } catch (err) {
-      const axiosError = err as AxiosError<string>;
-      console.log(axiosError);
-      toast.error(axiosError?.response?.data || "Signup failed");
+      const error = err as any;
+      console.log(error);
+      toast.error(error?.data || error?.message || "Signup failed");
     }
   };
 
-  const formik = useFormik<SignUpValues>({
+  const formik = useFormikHook<SignUpValues>({
     initialValues: initialValues,
     validationSchema: signUpValidation,
     onSubmit: (values) => handleSignUp(values),
@@ -101,7 +96,7 @@ const Signup = (): React.ReactElement => {
       {/* Combined Single Glass Container with gorgeous border radius */}
       <div className="relative w-full max-w-4xl bg-[#161B22]/60 border border-white/10 rounded-3xl shadow-2xl backdrop-blur-md grid grid-cols-1 lg:grid-cols-12 items-stretch z-10 overflow-hidden">
 
-        {/* Left Form Pane */}
+         {/* Left Form Pane */}
         <div className="lg:col-span-7 p-8 sm:p-10 flex flex-col justify-between text-left border-b lg:border-b-0 lg:border-r border-white/10">
 
           <div>

@@ -2,10 +2,9 @@ import React from "react";
 import { useDispatch } from "react-redux";
 import UsersCard from "../components/UsersCard";
 import Loader from "../components/Loader";
-import axios from "axios";
 import imageCompression from "browser-image-compression";
 import { addUser } from "../store/userSlice";
-import { BASE_URL } from "../utils/url";
+import { useEditProfileMutation } from "../store/tinderApi";
 import { toast } from "react-toastify";
 import { useFormik } from "formik";
 import { User } from "../types";
@@ -48,6 +47,7 @@ function EditProfile(): React.ReactElement {
   };
 
   const dispatch = useDispatch();
+  const [editProfile] = useEditProfileMutation();
 
   const handleUpdate = async (values: EditProfileValues): Promise<void> => {
     try {
@@ -92,20 +92,11 @@ function EditProfile(): React.ReactElement {
         return;
       }
 
-      const res = await axios.patch<EditProfileResponse>(
-        `${BASE_URL}/profile/edit`,
-        formData,
-        {
-          withCredentials: true,
-          headers: { "Content-Type": "multipart/form-data" },
-        }
-      );
+      const res = await editProfile(formData).unwrap() as EditProfileResponse;
 
-      if (res.status === 200) {
-        dispatch(addUser(res.data.data));
-        localStorage.setItem("tinderUser", JSON.stringify(res.data.data));
-        toast.success(res.data.message);
-      }
+      dispatch(addUser(res.data));
+      localStorage.setItem("tinderUser", JSON.stringify(res.data));
+      toast.success(res.message);
     } catch (err) {
       const error = err as Error;
       console.log(error);

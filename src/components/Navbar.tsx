@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { useDispatch } from "react-redux";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAppSelector } from "../store/appStore";
 import { removeUser } from "../store/userSlice";
-import { BASE_URL } from "../utils/url";
+import { useLogoutMutation } from "../store/tinderApi";
 import { toast } from "react-toastify";
 import { User } from "../types";
 import { Menu, X } from "lucide-react";
@@ -32,24 +31,18 @@ function Navbar(): React.ReactElement {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [logout] = useLogoutMutation();
 
   const handleLogout = async (): Promise<void> => {
     try {
-      const response = await axios.post(
-        `${BASE_URL}/logout`,
-        {},
-        { withCredentials: true }
-      );
-      if (response.status === 200) {
-        dispatch(removeUser());
-        localStorage.removeItem("tinderUser");
-        toast.success("Logout successful");
-        navigate("/login");
-      }
+      await logout().unwrap();
+      dispatch(removeUser());
+      localStorage.removeItem("tinderUser");
+      toast.success("Logout successful");
+      navigate("/login");
     } catch (err) {
       const error = err as Error;
       toast.error(error.message || "Logout failed");
-      //
     }
   };
 

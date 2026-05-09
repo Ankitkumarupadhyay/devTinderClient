@@ -1,44 +1,15 @@
-import React, { useEffect } from "react";
-import axios from "axios";
-import { useDispatch } from "react-redux";
-import { useAppSelector } from "../store/appStore";
-import { addConnections } from "../store/connectionSlice";
+import React from "react";
+import { useGetConnectionsQuery } from "../store/tinderApi";
 import ConnectionCard from "./ConnectionCard";
 import Loader from "./Loader";
-import { useNavigate, Link } from "react-router-dom";
-import { BASE_URL } from "../utils/url";
-import { User } from "../types";
+import { Link } from "react-router-dom";
 import { Sparkles, Compass, Users } from "lucide-react";
 
-interface ConnectionResponse {
-  data: User[];
-}
-
 function Connections(): React.ReactElement {
-  const dispatch = useDispatch();
-  const connections = useAppSelector((store) => store.connections);
-  const navigate = useNavigate();
+  const { data, isLoading } = useGetConnectionsQuery();
+  const connections = data?.data;
 
-  useEffect(() => {
-    const fetchConnections = async (): Promise<void> => {
-      try {
-        const res = await axios.get<ConnectionResponse>(
-          `${BASE_URL}/user/connections`,
-          {
-            withCredentials: true,
-          }
-        );
-        if (res.status === 200) {
-          dispatch(addConnections(res.data.data));
-        }
-      } catch {
-        //
-      }
-    };
-    fetchConnections();
-  }, [dispatch, navigate]);
-
-  if (!connections) {
+  if (isLoading) {
     return (
       <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center relative px-4 overflow-hidden">
         <Loader />
@@ -47,7 +18,7 @@ function Connections(): React.ReactElement {
   }
 
   // Beautiful network empty state
-  if (connections.length === 0) {
+  if (!connections || connections.length === 0) {
     return (
       <div className="min-h-[calc(100vh-4rem)] text-slate-100 flex flex-col items-center justify-center relative px-4 overflow-hidden py-12">
         

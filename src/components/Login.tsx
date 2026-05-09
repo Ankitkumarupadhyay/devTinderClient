@@ -1,9 +1,8 @@
 import React, { useState } from "react";
-import axios, { AxiosError } from "axios";
 import { useDispatch } from "react-redux";
 import { addUser } from "../store/userSlice";
 import { useNavigate } from "react-router-dom";
-import { BASE_URL } from "../utils/url";
+import { useLoginMutation } from "../store/tinderApi";
 import { toast } from "react-toastify";
 import { useFormik } from "formik";
 import { loginValidation } from "../utils/yupValidation";
@@ -22,9 +21,9 @@ interface LoginResponse {
 
 function Login(): React.ReactElement {
   const [showPassword, setShowPassword] = useState<boolean>(false);
-
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [login] = useLoginMutation();
 
   const initialValues: LoginValues = {
     emailId: "",
@@ -33,29 +32,21 @@ function Login(): React.ReactElement {
 
   const handleLogin = async (values: LoginValues): Promise<void> => {
     try {
-      const formData = new FormData();
-      formData.append("emailId", values.emailId || "");
-      formData.append("password", values.password || "");
+      const payload = {
+        emailId: values.emailId || "",
+        password: values.password || "",
+      };
 
-      const res = await axios.post<LoginResponse>(
-        `${BASE_URL}/login`,
-        formData,
-        {
-          withCredentials: true,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      const res = await login(payload).unwrap() as LoginResponse;
 
-      if (res.status === 200) {
-        localStorage.setItem("tinderUser", JSON.stringify(res.data.data));
-        dispatch(addUser(res.data.data));
-        navigate("/feed");
-        toast.success(res.data.message);
-      }
+      localStorage.setItem("tinderUser", JSON.stringify(res.data));
+      dispatch(addUser(res.data));
+      navigate("/feed");
+      toast.success(res.message);
     } catch (err) {
-      const axiosError = err as AxiosError<string>;
-      console.log(axiosError);
-      toast.error(axiosError?.response?.data || "Login failed");
+      const error = err as any;
+      console.log(error);
+      toast.error(error?.data || error?.message || "Login failed");
     }
   };
 

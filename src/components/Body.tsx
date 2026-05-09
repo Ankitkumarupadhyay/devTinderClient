@@ -3,12 +3,11 @@ import { Outlet, useLocation, useNavigate, Link } from "react-router-dom";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import { useDispatch } from "react-redux";
-import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { addUser, removeUser } from "../store/userSlice";
 import { useAppSelector } from "../store/appStore";
-import { BASE_URL } from "../utils/url";
+import { useGetProfileQuery, useLogoutMutation } from "../store/tinderApi";
 import { User } from "../types";
 import { 
   LayoutDashboard, 
@@ -23,10 +22,6 @@ import {
   ChevronDown
 } from "lucide-react";
 
-interface ProfileResponse {
-  data: User;
-}
-
 function Body(): React.ReactElement {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -35,6 +30,16 @@ function Body(): React.ReactElement {
   
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
+
+  const isPrivatePath = ["/feed", "/profile", "/connections", "/requests"].includes(location.pathname);
+
+  // Load profile details with RTK Query (skipping on generic auth paths to prevent raw redirects)
+  const isAuthPath = ["/login", "/signup", "/forgotpassword", "/"].includes(location.pathname);
+  const { data: profileResponse, error } = useGetProfileQuery(undefined, {
+    skip: isAuthPath && !localStorage.getItem("tinderUser"),
+  });
+
+  const profileUser = profileResponse?.data;
 
   const getLocalStorageUser = (): User | null => {
     const raw = localStorage.getItem("tinderUser");
@@ -47,60 +52,45 @@ function Body(): React.ReactElement {
   };
 
   const localUser = getLocalStorageUser();
-  const activeUser = storeUser || localUser;
+  const activeUser = storeUser || profileUser || localUser;
 
+  // Sync profile details upon successful fetch
   useEffect(() => {
-    const fetchUser = async (): Promise<void> => {
-      try {
-        if (localUser) {
-          if (["/login", "/signup"].includes(location.pathname)) {
-            navigate("/feed");
-          }
-          return;
-        }
-
-        if (["/", "/forgotpassword", "/login", "/signup"].includes(location.pathname)) {
-          return;
-        }
-
-        const res = await axios.get<ProfileResponse>(`${BASE_URL}/profile/view`, {
-          withCredentials: true,
-        });
-
-        if (res.status === 200) {
-          localStorage.setItem("tinderUser", JSON.stringify(res.data.data));
-          dispatch(addUser(res.data.data));
-        }
-      } catch {
-        localStorage.removeItem("tinderUser");
-        if (!["/", "/forgotpassword", "/login", "/signup"].includes(location.pathname)) {
-          navigate("/login");
-        }
+    if (profileUser) {
+      localStorage.setItem("tinderUser", JSON.stringify(profileUser));
+      dispatch(addUser(profileUser));
+      if (["/login", "/signup"].includes(location.pathname)) {
+        navigate("/feed");
       }
-    };
-    fetchUser();
-  }, [dispatch, navigate, location.pathname]);
+    }
+  }, [profileUser, dispatch, location.pathname, navigate]);
+
+  // Handle query session failures
+  useEffect(() => {
+    if (error) {
+      localStorage.removeItem("tinderUser");
+      dispatch(removeUser());
+      if (isPrivatePath) {
+        navigate("/login");
+      }
+    }
+  }, [error, isPrivatePath, dispatch, navigate]);
+
+  const [logout] = useLogoutMutation();
 
   const handleLogout = async (): Promise<void> => {
     try {
-      const response = await axios.post(
-        `${BASE_URL}/logout`,
-        {},
-        { withCredentials: true }
-      );
-      if (response.status === 200) {
-        dispatch(removeUser());
-        localStorage.removeItem("tinderUser");
-        toast.success("Logout successful");
-        navigate("/login");
-      }
+      await logout().unwrap();
+      dispatch(removeUser());
+      localStorage.removeItem("tinderUser");
+      toast.success("Logout successful");
+      navigate("/login");
     } catch (err) {
       const error = err as Error;
       toast.error(error.message || "Logout failed");
     }
   };
 
-  const isPrivatePath = ["/feed", "/profile", "/connections", "/requests"].includes(location.pathname);
   const isAuthenticated = !!activeUser;
 
   // Determine section heading for top bar
@@ -129,7 +119,7 @@ function Body(): React.ReactElement {
     { label: "Profile", path: "/profile", icon: <UserIcon size={18} /> },
   ];
 
-  if (isAuthenticated && isPrivatePath) {
+  if (isAuthenticated && isPrivatePath && activeUser) {
     return (
       <div className="flex h-screen w-screen bg-[#090D1A] overflow-hidden text-slate-100 font-sans relative">
         <ToastContainer />
