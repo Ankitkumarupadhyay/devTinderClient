@@ -7,10 +7,7 @@ import { BASE_URL } from "../utils/url";
 import { toast } from "react-toastify";
 import { useFormik } from "formik";
 import { loginValidation } from "../utils/yupValidation";
-import EmailSVG from "../assets/icons/Email";
-import PasswordSVG from "../assets/icons/Password";
-import EyeOpen from "../assets/icons/EyeOpen";
-import EyeClose from "../assets/icons/EyeClose";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles } from "lucide-react";
 import { User } from "../types";
 
 interface LoginValues {
@@ -52,7 +49,7 @@ function Login(): React.ReactElement {
       if (res.status === 200) {
         localStorage.setItem("tinderUser", JSON.stringify(res.data.data));
         dispatch(addUser(res.data.data));
-        navigate("/");
+        navigate("/feed");
         toast.success(res.data.message);
       }
     } catch (err) {
@@ -69,78 +66,125 @@ function Login(): React.ReactElement {
   });
 
   return (
-    <div className="flex my-10 justify-center">
-      <div className="card bg-base-300 w-96 shadow-xl">
-        <div className="card-body">
-          <h2 className="card-title justify-center text-2xl font-bold">
-            Login
-          </h2>
+    <div className="min-h-[85vh] bg-[#0B1120] text-slate-100 flex items-center justify-center relative px-4 overflow-hidden py-12">
+      
+      {/* Background aurora mesh orbs */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 opacity-30">
+        <div className="absolute top-1/4 left-1/4 w-[350px] h-[350px] rounded-full bg-violet-600 blur-[120px] animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full bg-indigo-500 blur-[140px]"></div>
+      </div>
 
-          <form onSubmit={formik.handleSubmit} className="flex flex-col gap-2">
-            <label className="my-1 font-bold text-lg">Email ID:</label>
-            <label className="input input-bordered flex items-center gap-2">
-              <EmailSVG />
+      {/* Glassmorphic Card Container */}
+      <div className="relative w-full max-w-md bg-[#161B22]/60 border border-white/10 rounded-2xl p-8 sm:p-10 shadow-2xl shadow-indigo-950/40 backdrop-blur-md z-10">
+        
+        {/* Card Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-xs font-semibold text-indigo-300 mb-4">
+            <Sparkles size={12} className="text-pink-400" />
+            <span>Welcome back to devTinder</span>
+          </div>
+          <h2 className="text-3xl font-black text-white tracking-tight">
+            Account Log In
+          </h2>
+          <p className="text-slate-400 text-sm mt-2">
+            Enter your credentials to connect with other developers
+          </p>
+        </div>
+
+        {/* Login Form */}
+        <form onSubmit={formik.handleSubmit} className="flex flex-col gap-5 text-left">
+          
+          {/* Email ID Field */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-slate-300">Email Address</label>
+            <div className="relative flex items-center">
+              <span className="absolute left-3 text-slate-400">
+                <Mail size={18} />
+              </span>
               <input
                 name="emailId"
                 type="email"
-                className="grow"
-                placeholder="Email"
+                placeholder="developer@example.com"
+                className="w-full bg-[#0F172A]/80 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder-slate-500 outline-none focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 transition-all"
                 onChange={formik.handleChange}
                 value={formik.values.emailId || ""}
               />
-            </label>
+            </div>
             {formik.errors.emailId && formik.touched.emailId && (
-              <p className="text-red-500 mt-1">{formik.errors.emailId} </p>
+              <p className="text-red-400 text-xs mt-0.5">{formik.errors.emailId}</p>
             )}
+          </div>
 
-            <label className="my-1 font-bold text-lg">Password:</label>
-            <label className=" input input-bordered flex items-center gap-2">
-              <PasswordSVG />
-
+          {/* Password Field */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-slate-300">Password</label>
+            <div className="relative flex items-center">
+              <span className="absolute left-3 text-slate-400">
+                <Lock size={18} />
+              </span>
               <input
                 name="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Enter password"
-                className="grow"
+                placeholder="••••••••••••"
+                className="w-full bg-[#0F172A]/80 border border-white/10 rounded-xl py-3 pl-10 pr-10 text-sm text-white placeholder-slate-500 outline-none focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 transition-all"
                 onChange={formik.handleChange}
                 value={formik.values.password || ""}
               />
-              <span
-                className="cursor-pointer"
+              <button
+                type="button"
+                className="absolute right-3 text-slate-400 hover:text-white transition-colors focus:outline-none"
                 onClick={() => setShowPassword((prev) => !prev)}
               >
-                {showPassword ? <EyeOpen /> : <EyeClose />}
-              </span>
-            </label>
-
-            {formik.errors.password && formik.touched.password && (
-              <p className="text-red-500 mt-1">{formik.errors.password} </p>
-            )}
-
-            <p
-              className="flex justify-end mb-2 underline cursor-pointer "
-              onClick={() => navigate("/forgotpassword")}
-            >
-              Forget password?click here
-            </p>
-
-            <div className="card-actions justify-center mt-4">
-              <button className="btn btn-primary" type="submit">
-                {formik.isSubmitting ? (
-                  <span className="loading loading-spinner text-info"></span>
-                ) : (
-                  "Login"
-                )}
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-            <p
-              onClick={() => navigate("/signup")}
-              className=" justify-center underline cursor-pointer mx-auto"
+            {formik.errors.password && formik.touched.password && (
+              <p className="text-red-400 text-xs mt-0.5">{formik.errors.password}</p>
+            )}
+          </div>
+
+          {/* Forget Password */}
+          <div className="flex justify-end">
+            <button
+              type="button"
+              className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors hover:underline focus:outline-none"
+              onClick={() => navigate("/forgotpassword")}
             >
-              New user? SignUp
-            </p>
-          </form>
-        </div>
+              Forgot password? Click here
+            </button>
+          </div>
+
+          {/* Submit Button */}
+          <div className="mt-4">
+            <button
+              className="w-full btn btn-primary bg-gradient-to-r from-violet-600 to-indigo-600 hover:opacity-95 border-none py-3 rounded-xl text-sm font-bold text-white shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2 group transition-all"
+              type="submit"
+              disabled={formik.isSubmitting}
+            >
+              {formik.isSubmitting ? (
+                <span className="loading loading-spinner text-white"></span>
+              ) : (
+                <>
+                  Log In Account
+                  <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Navigate to Signup */}
+          <p className="text-sm text-slate-400 text-center mt-4">
+            New developer?{" "}
+            <button
+              type="button"
+              className="text-indigo-400 hover:text-indigo-300 font-bold transition-colors hover:underline"
+              onClick={() => navigate("/signup")}
+            >
+              Sign Up
+            </button>
+          </p>
+
+        </form>
       </div>
     </div>
   );

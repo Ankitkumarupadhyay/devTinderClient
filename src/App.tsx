@@ -12,6 +12,8 @@ import Requests from "./components/Requests";
 import ResetPassword from "./components/ResetPassword";
 import ForgotPassword from "./components/ForgotPassword";
 import Signup from "./components/Signup";
+import LandingPage from "./components/LandingPage";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App(): React.ReactElement {
   return (
@@ -20,13 +22,42 @@ function App(): React.ReactElement {
         <BrowserRouter basename="/">
           <Routes>
             <Route path="/" element={<Body />}>
-              <Route path="/" element={<Feed />} />
+              <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<Login/>} />
               <Route path="/signup" element={<Signup/>} />
 
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/connections" element={<Connections />} />
-              <Route path="/requests" element={<Requests />} />
+              <Route
+                path="/feed"
+                element={
+                  <ProtectedRoute>
+                    <Feed />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/connections"
+                element={
+                  <ProtectedRoute>
+                    <Connections />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/requests"
+                element={
+                  <ProtectedRoute>
+                    <Requests />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/error" element={<Error />} />
             </Route>
             <Route path="/forgotpassword" element={<ForgotPassword />} />
