@@ -1,37 +1,27 @@
 import React, { useEffect } from "react";
-import axios from "axios";
 import { useDispatch } from "react-redux";
 import { addFeed } from "../store/feedSlice";
 import { useAppSelector } from "../store/appStore";
+import { useGetFeedQuery } from "../store/tinderApi";
 import UserCard from "./UsersCard";
-import { useNavigate, Link } from "react-router-dom";
 import Loader from "./Loader";
-import { BASE_URL } from "../utils/url";
-import { User } from "../types";
+import { Link } from "react-router-dom";
 import { Sparkles, Users, Search, ArrowRight, Settings } from "lucide-react";
 
 const Feed = (): React.ReactElement => {
+  const { data: feedData, isLoading } = useGetFeedQuery();
   const feed = useAppSelector((store) => store.feed);
   const storeUser = useAppSelector((store) => store.user);
   const dispatch = useDispatch();
-  const navigate = useNavigate();
 
+  // Sync RTK Query results with the local animated state slice
   useEffect(() => {
-    const getFeed = async (): Promise<void> => {
-      try {
-        const res = await axios.get<User[]>(`${BASE_URL}/user/feed`, {
-          withCredentials: true,
-        });
+    if (feedData) {
+      dispatch(addFeed(feedData));
+    }
+  }, [feedData, dispatch]);
 
-        dispatch(addFeed(res.data));
-      } catch {
-        //
-      }
-    };
-    getFeed();
-  }, [dispatch, navigate]);
-
-  if (!feed) {
+  if (isLoading && (!feed || feed.length === 0)) {
     return (
       <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center relative px-4 overflow-hidden">
         <Loader />
@@ -40,7 +30,7 @@ const Feed = (): React.ReactElement => {
   }
 
   // Beautiful pulsing radar scanning empty state if no users found
-  if (feed.length <= 0) {
+  if (!feed || feed.length <= 0) {
     const userPhoto = storeUser?.photoUrl;
     
     return (

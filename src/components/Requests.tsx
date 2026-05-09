@@ -1,56 +1,24 @@
-import React, { useEffect } from "react";
-import axios from "axios";
-import { useDispatch } from "react-redux";
+import React from "react";
+import { useGetRequestsQuery, useReviewConnectionRequestMutation } from "../store/tinderApi";
 import Loader from "./Loader";
-import { useNavigate, Link } from "react-router-dom";
-import { useAppSelector } from "../store/appStore";
-import { removeRequest, addRequests } from "../store/requestSlice";
-import { BASE_URL } from "../utils/url";
-import { ConnectionRequest } from "../types";
+import { Link } from "react-router-dom";
 import { Sparkles, MapPin, Inbox, Compass, Check, X } from "lucide-react";
 
-interface RequestsResponse {
-  data: ConnectionRequest[];
-}
-
 function Requests(): React.ReactElement {
-  const dispatch = useDispatch();
-  const requests = useAppSelector((store) => store.requests);
-  const navigate = useNavigate();
+  const { data, isLoading } = useGetRequestsQuery();
+  const [reviewConnectionRequest] = useReviewConnectionRequestMutation();
+
+  const requests = data?.data;
 
   const reviewRequest = async (status: "accepted" | "rejected", id: string): Promise<void> => {
     try {
-      const res = await axios.post(
-        `${BASE_URL}/request/review/${status}/${id}`,
-        {},
-        { withCredentials: true }
-      );
-      if (res.status === 200) {
-        dispatch(removeRequest(id));
-      }
+      await reviewConnectionRequest({ status, requestId: id }).unwrap();
     } catch {
       //   
     }
   };
 
-  useEffect(() => {
-    const fetchRequests = async (): Promise<void> => {
-      try {
-        const res = await axios.get<RequestsResponse>(
-          `${BASE_URL}/user/requests`,
-          {
-            withCredentials: true,
-          }
-        );
-        dispatch(addRequests(res.data.data));
-      } catch {
-        //
-      }
-    };
-    fetchRequests();
-  }, [dispatch, navigate]);
-
-  if (!requests) {
+  if (isLoading) {
     return (
       <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center relative px-4 overflow-hidden">
         <Loader />
@@ -59,7 +27,7 @@ function Requests(): React.ReactElement {
   }
 
   // Beautiful requests empty state
-  if (requests.length === 0) {
+  if (!requests || requests.length === 0) {
     return (
       <div className="min-h-[calc(100vh-4rem)] text-slate-100 flex flex-col items-center justify-center relative px-4 overflow-hidden py-12">
         

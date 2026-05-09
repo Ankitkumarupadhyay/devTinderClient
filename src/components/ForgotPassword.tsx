@@ -1,39 +1,29 @@
 import React, { useState } from "react";
 import Navbar from "./Navbar";
-import axios, { AxiosError } from "axios";
-import { BASE_URL } from "../utils/url";
+import { useForgotPasswordMutation } from "../store/tinderApi";
 import { Mail, ArrowRight, Sparkles, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-interface ErrorResponse {
-  message?: string;
-}
 
 function ForgotPassword(): React.ReactElement {
   const [email, setEmail] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [showToast, setShowToast] = useState<boolean>(false);
   const navigate = useNavigate();
+  const [forgotPassword, { isLoading }] = useForgotPasswordMutation();
 
   const sendEmail = async (): Promise<void> => {
     try {
       setError("");
-      const res = await axios.post(
-        `${BASE_URL}/forgotpassword`,
-        { email },
-        { withCredentials: true }
-      );
-      if (res.status === 200) {
-        setEmail("");
-        setShowToast(true);
-        setTimeout(() => {
-          setShowToast(false);
-          navigate("/login");
-        }, 4000);
-      }
+      await forgotPassword({ email }).unwrap();
+      setEmail("");
+      setShowToast(true);
+      setTimeout(() => {
+        setShowToast(false);
+        navigate("/login");
+      }, 4000);
     } catch (err) {
-      const axiosError = err as AxiosError<ErrorResponse>;
-      setError(axiosError?.response?.data?.message || "⚠️ Something went wrong!");
+      const errorPayload = err as any;
+      setError(errorPayload?.data?.message || "⚠️ Something went wrong!");
     }
   };
 
@@ -93,11 +83,18 @@ function ForgotPassword(): React.ReactElement {
             {/* Action buttons */}
             <div className="mt-4 flex flex-col gap-4">
               <button 
+                disabled={isLoading}
                 className="w-full btn btn-primary bg-gradient-to-r from-violet-600 to-indigo-600 hover:opacity-95 border-none py-3 rounded-xl text-sm font-bold text-white shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2 group transition-all" 
                 onClick={() => sendEmail()}
               >
-                Send Reset Link
-                <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+                {isLoading ? (
+                  <span className="loading loading-spinner text-white"></span>
+                ) : (
+                  <>
+                    <span>Send Reset Link</span>
+                    <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+                  </>
+                )}
               </button>
 
               <button

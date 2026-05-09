@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import axios from "axios";
 import { useDispatch } from "react-redux";
 import { removeUserFromFeed } from "../store/feedSlice";
-import { BASE_URL } from "../utils/url";
+import { useSendConnectionRequestMutation } from "../store/tinderApi";
 import { User } from "../types";
 import { Heart, X, MapPin } from "lucide-react";
 
@@ -17,14 +16,11 @@ function UsersCard({ user }: UsersCardProps): React.ReactElement {
   const dispatch = useDispatch();
   const location = useLocation();
 
+  const [sendConnectionRequest] = useSendConnectionRequestMutation();
+
   const handleFeed = async (status: "ignored" | "interested", userId: string): Promise<void> => {
     try {
-      await axios.post(
-        `${BASE_URL}/request/send/${status}/${userId}`,
-        {},
-        { withCredentials: true }
-      );
-
+      await sendConnectionRequest({ status, userId }).unwrap();
       dispatch(removeUserFromFeed(userId));
     } catch {
       //
@@ -51,7 +47,7 @@ function UsersCard({ user }: UsersCardProps): React.ReactElement {
     return skillSets[charCodeSum % skillSets.length];
   };
 
-  // Dynamically assign cool professional roles based on name value
+  // Dynamically assign cool professional roles based on name value to provide ultra-realistic feedback
   const getMockRole = (name: string): string => {
     const roles = [
       "Senior Frontend Engineer",
@@ -73,7 +69,6 @@ function UsersCard({ user }: UsersCardProps): React.ReactElement {
   };
 
   const expYears = age ? Math.max(1, age - 21) : 3;
-  const contributionsCount = firstName.length * 180 + 820;
 
   return (
     <div className="flex flex-col items-center">
@@ -115,7 +110,7 @@ function UsersCard({ user }: UsersCardProps): React.ReactElement {
           </div>
         </div>
 
-        {/* Lower Details Card container */}
+        {/* Card Body Details Section */}
         <div className="p-6 sm:p-8 flex flex-col gap-6">
 
           {/* BIO & EXP Grid layout */}
@@ -124,13 +119,13 @@ function UsersCard({ user }: UsersCardProps): React.ReactElement {
             {/* Bio info */}
             <div className="sm:col-span-9 text-left">
               <span className="text-[10px] uppercase font-black tracking-widest text-slate-500">Bio</span>
-              <p className="text-xs text-slate-300 leading-relaxed italic mt-1.5 pr-2">
-                &ldquo;{about || "Building the next generation of computing interfaces. Obsessed with clean code, micro-interactions, dark mode, and 60fps performance."}&rdquo;
+              <p className="text-sm text-slate-300 leading-relaxed mt-1.5 italic font-medium">
+                &ldquo;{about || "Let's connect and build some game-changing projects together!"}&rdquo;
               </p>
             </div>
 
-            {/* Experience count */}
-            <div className="sm:col-span-3 text-left sm:text-right">
+            {/* Exp info */}
+            <div className="sm:col-span-3 text-left sm:text-right shrink-0">
               <span className="text-[10px] uppercase font-black tracking-widest text-slate-500">Exp</span>
               <p className="text-2xl font-black text-white leading-none mt-1">
                 {expYears} <span className="text-xs text-slate-400 font-bold">YRS</span>
