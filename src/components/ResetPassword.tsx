@@ -1,21 +1,26 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import Navbar from "./Navbar";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import { BASE_URL } from "../utils/url";
 
-function ResetPassword() {
+interface ErrorResponse {
+  message?: string;
+}
+
+function ResetPassword(): React.ReactElement {
   const navigate = useNavigate();
-  const { resetToken } = useParams(); // Extract resetToken from URL
+  const { resetToken } = useParams<{ resetToken: string }>();
 
-  const [password, setPassword] = useState("");
-  const [passwordConfirm, setPasswordConfirm] = useState("");
-  const [error, setError] = useState("");
+  const [password, setPassword] = useState<string>("");
+  const [passwordConfirm, setPasswordConfirm] = useState<string>("");
+  const [error, setError] = useState<string>("");
 
-  const resetPassword = async () => {
+  const resetPassword = async (): Promise<void> => {
     try {
+      setError("");
       const res = await axios.patch(
-        `${BASE_URL}/resetpassword/${resetToken}`,
+        `${BASE_URL}/resetpassword/${resetToken || ""}`,
         { password, passwordConfirm },
         { withCredentials: true }
       );
@@ -26,7 +31,8 @@ function ResetPassword() {
         setPasswordConfirm("");
       }
     } catch (err) {
-      setError(err?.response?.data?.message || "⚠️ Something went wrong!");
+      const axiosError = err as AxiosError<ErrorResponse>;
+      setError(axiosError?.response?.data?.message || "⚠️ Something went wrong!");
     }
   };
 

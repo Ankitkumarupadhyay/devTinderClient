@@ -1,9 +1,9 @@
-import axios from "axios";
+import React, { useState } from "react";
+import axios, { AxiosError } from "axios";
 import { useFormik } from "formik";
 import { BASE_URL } from "../utils/url";
 import { toast } from "react-toastify";
 import { signUpValidation } from "../utils/yupValidation";
-import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import PasswordSVG from "../assets/icons/Password";
 import EyeOpen from "../assets/icons/EyeOpen";
@@ -12,12 +12,24 @@ import EmailSVG from "../assets/icons/Email";
 import imageCompression from "browser-image-compression";
 import userProfile from "../assets/images/userProfile.png";
 
-const Signup = () => {
-  const [showPassword, setShowPassword] = useState(false);
-  const [imageUrl, setImageUrl] = useState("");
+interface SignUpValues {
+  firstName?: string;
+  lastName?: string;
+  emailId?: string;
+  password?: string;
+  photoUrl?: File | null;
+}
+
+interface SignUpResponse {
+  message: string;
+}
+
+const Signup = (): React.ReactElement => {
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [imageUrl, setImageUrl] = useState<string>("");
   const navigate = useNavigate();
 
-  const initialValues = {
+  const initialValues: SignUpValues = {
     firstName: "",
     lastName: "",
     emailId: "",
@@ -25,8 +37,12 @@ const Signup = () => {
     photoUrl: null,
   };
 
-  const handleSignUp = async (values) => {
+  const handleSignUp = async (values: SignUpValues): Promise<void> => {
     try {
+      if (!values.photoUrl) {
+        toast.error("Profile picture is required.");
+        return;
+      }
       const compressedFile = await imageCompression(values.photoUrl, {
         maxSizeMB: 10,
         maxWidthOrHeight: 1024,
@@ -37,13 +53,13 @@ const Signup = () => {
         return;
       }
       const formData = new FormData();
-      formData.append("firstName", values?.firstName);
-      formData.append("lastName", values?.lastName);
-      formData.append("emailId", values?.emailId);
-      formData.append("password", values?.password);
+      formData.append("firstName", values.firstName || "");
+      formData.append("lastName", values.lastName || "");
+      formData.append("emailId", values.emailId || "");
+      formData.append("password", values.password || "");
       formData.append("photoUrl", compressedFile);
 
-      const res = await axios.post(`${BASE_URL}/signup`, formData, {
+      const res = await axios.post<SignUpResponse>(`${BASE_URL}/signup`, formData, {
         withCredentials: true,
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -53,21 +69,23 @@ const Signup = () => {
         navigate("/login");
       }
     } catch (err) {
-      console.log(err);
-      toast.error(err?.response?.data);
+      const axiosError = err as AxiosError<string>;
+      console.log(axiosError);
+      toast.error(axiosError?.response?.data || "Signup failed");
     }
   };
 
-  const formik = useFormik({
+  const formik = useFormik<SignUpValues>({
     initialValues: initialValues,
     validationSchema: signUpValidation,
     onSubmit: (values) => handleSignUp(values),
   });
 
-  const handleImageUpload = (e) => {
-    formik.setFieldValue("photoUrl", e.currentTarget.files[0]);
-    if (e.currentTarget.files[0]) {
-      const localUrl = URL.createObjectURL(e.currentTarget.files[0]);
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const file = e.currentTarget.files?.[0] || null;
+    formik.setFieldValue("photoUrl", file);
+    if (file) {
+      const localUrl = URL.createObjectURL(file);
       setImageUrl(localUrl);
     } else {
       setImageUrl("");
@@ -90,8 +108,7 @@ const Signup = () => {
                 type="text"
                 className="grow"
                 onChange={formik.handleChange}
-                value={formik.values.firstName}
-                // onBlur={formik.handleBlur}
+                value={formik.values.firstName || ""}
               />
             </label>
             {formik.errors.firstName && formik.touched.firstName && (
@@ -105,8 +122,7 @@ const Signup = () => {
                 type="text"
                 className="grow"
                 onChange={formik.handleChange}
-                value={formik.values.lastName}
-                // onBlur={formik.handleBlur}
+                value={formik.values.lastName || ""}
               />
             </label>
             {formik.errors.lastName && formik.touched.lastName && (
@@ -124,7 +140,7 @@ const Signup = () => {
               />
             </label>
             {formik.errors.photoUrl && formik.touched.photoUrl && (
-              <p className="text-red-500">{formik.errors.photoUrl} </p>
+              <p className="text-red-500">{formik.errors.photoUrl as string} </p>
             )}
 
             <label className="my-1 font-bold text-lg">Email ID:</label>
@@ -136,8 +152,7 @@ const Signup = () => {
                 className="grow"
                 placeholder="Email"
                 onChange={formik.handleChange}
-                value={formik.values.emailId}
-                // onBlur={formik.handleBlur}
+                value={formik.values.emailId || ""}
               />
             </label>
             {formik.errors.emailId && formik.touched.emailId && (
@@ -154,7 +169,7 @@ const Signup = () => {
                 placeholder="Enter password"
                 className="grow"
                 onChange={formik.handleChange}
-                value={formik.values.password}
+                value={formik.values.password || ""}
               />
               <span
                 className="cursor-pointer"

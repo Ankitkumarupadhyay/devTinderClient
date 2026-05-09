@@ -1,11 +1,10 @@
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import Navbar from "./Navbar";
 
-function Error() {
+function Error(): React.ReactElement {
   const navigate = useNavigate();
   return (
     <>
-      {/* <Navbar /> */}
       <div className="text-gray-300 mt-40 mb-10 mx-auto w-[700px]  text-2xl">
         <p>⚠️ Something went wrong!...Sorry for the inconvenient caused😥</p>
         <p>Try again after sometime!</p>

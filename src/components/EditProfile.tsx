@@ -1,3 +1,4 @@
+import React from "react";
 import { useDispatch } from "react-redux";
 import UsersCard from "../components/UsersCard";
 import Loader from "../components/Loader";
@@ -7,70 +8,111 @@ import { addUser } from "../store/userSlice";
 import { BASE_URL } from "../utils/url";
 import { toast } from "react-toastify";
 import { useFormik } from "formik";
+import { User } from "../types";
 
-function EditProfile() {
-  //getting user data to prefill the form
-  const user = JSON.parse(localStorage.getItem("tinderUser"));
+interface EditProfileValues {
+  firstName?: string;
+  lastName?: string;
+  age?: string | number;
+  gender?: "Male" | "Female" | "Other" | "";
+  photoUrl?: string | File;
+  about?: string;
+}
 
-  const initialValues = {
-    firstName: user?.firstName,
-    lastName: user?.lastName,
+interface EditProfileResponse {
+  message: string;
+  data: User;
+}
+
+function EditProfile(): React.ReactElement {
+  const getLocalStorageUser = (): User | null => {
+    const raw = localStorage.getItem("tinderUser");
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as User;
+    } catch {
+      return null;
+    }
+  };
+
+  const user = getLocalStorageUser();
+
+  const initialValues: EditProfileValues = {
+    firstName: user?.firstName || "",
+    lastName: user?.lastName || "",
     age: user?.age || "",
     gender: user?.gender || "",
-    photoUrl: user?.photoUrl,
-    about: user?.about,
+    photoUrl: user?.photoUrl || "",
+    about: user?.about || "",
   };
 
   const dispatch = useDispatch();
 
-  const handleUpdate = async (values) => {
+  const handleUpdate = async (values: EditProfileValues): Promise<void> => {
     try {
-      let compressedFile;
-      typeof values.photoUrl === "string"
-        ? (compressedFile = values.photoUrl)
-        : (compressedFile = await imageCompression(values.photoUrl, {
-            maxSizeMB: 10,
-            maxWidthOrHeight: 1024,
-          }));
-      if (compressedFile.size > 10 * 1024 * 1024) {
-        toast.error("File is too large. Max size is 10MB.");
-        return;
+      let compressedFile: File | string | undefined;
+      if (typeof values.photoUrl === "string") {
+        compressedFile = values.photoUrl;
+      } else if (values.photoUrl instanceof File) {
+        compressedFile = await imageCompression(values.photoUrl, {
+          maxSizeMB: 10,
+          maxWidthOrHeight: 1024,
+        });
+        if (compressedFile.size > 10 * 1024 * 1024) {
+          toast.error("File is too large. Max size is 10MB.");
+          return;
+        }
       }
 
       const formData = new FormData();
 
-      const fieldsToCheck = ["firstName", "lastName", "age", "gender", "about"];
-      for (let field of fieldsToCheck) {
+      const fieldsToCheck: Array<keyof EditProfileValues> = [
+        "firstName",
+        "lastName",
+        "age",
+        "gender",
+        "about",
+      ];
+      for (const field of fieldsToCheck) {
         if (values[field] !== initialValues[field]) {
-          formData.append(field, values[field]);
+          const val = values[field];
+          if (val !== undefined && val !== null) {
+            formData.append(field, val.toString());
+          }
         }
       }
 
-      values?.photoUrl !== initialValues.photoUrl &&
-        formData.append("photoUrl", compressedFile || values.photoUrl);
+      if (values.photoUrl !== initialValues.photoUrl && compressedFile) {
+        formData.append("photoUrl", compressedFile);
+      }
 
-      if ([...formData.entries()].length === 0) {
+      if (Array.from(formData.keys()).length === 0) {
         toast.error("Update any field");
         return;
       }
 
-      const res = await axios.patch(`${BASE_URL}/profile/edit`, formData, {
-        withCredentials: true,
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const res = await axios.patch<EditProfileResponse>(
+        `${BASE_URL}/profile/edit`,
+        formData,
+        {
+          withCredentials: true,
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
 
       if (res.status === 200) {
-        dispatch(addUser(res?.data?.data));
+        dispatch(addUser(res.data.data));
         localStorage.setItem("tinderUser", JSON.stringify(res.data.data));
         toast.success(res.data.message);
       }
     } catch (err) {
-      console.log(err);
-      toast.error(err.message);
+      const error = err as Error;
+      console.log(error);
+      toast.error(error.message || "Failed to update profile");
     }
   };
 
-  const formik = useFormik({
+  const formik = useFormik<EditProfileValues>({
     initialValues: initialValues,
     onSubmit: (values) => handleUpdate(values),
   });
@@ -98,8 +140,7 @@ function EditProfile() {
                     type="text"
                     className="grow"
                     onChange={formik.handleChange}
-                    value={formik.values.firstName}
-                    // onBlur={formik.handleBlur}
+                    value={formik.values.firstName || ""}
                   />
                 </label>
                 {formik.errors.firstName && formik.touched.firstName && (
@@ -113,8 +154,7 @@ function EditProfile() {
                     type="text"
                     className="grow"
                     onChange={formik.handleChange}
-                    value={formik.values.lastName}
-                    // onBlur={formik.handleBlur}
+                    value={formik.values.lastName || ""}
                   />
                 </label>
                 {formik.errors.lastName && formik.touched.lastName && (
@@ -128,16 +168,14 @@ function EditProfile() {
                     type="file"
                     className="grow cursor-pointer"
                     onChange={(e) => {
-                      formik.setFieldValue(
-                        "photoUrl",
-                        e.currentTarget.files[0]
-                      );
+                      const file = e.currentTarget.files?.[0] || null;
+                      formik.setFieldValue("photoUrl", file);
                     }}
                     accept="image/*"
                   />
                 </label>
                 {formik.errors.photoUrl && formik.touched.photoUrl && (
-                  <p className="text-red-500">{formik.errors.photoUrl} </p>
+                  <p className="text-red-500">{formik.errors.photoUrl as string} </p>
                 )}
 
                 <label className="my-1 font-bold text-lg">Age:</label>
@@ -147,8 +185,7 @@ function EditProfile() {
                     type="text"
                     className="grow"
                     onChange={formik.handleChange}
-                    value={formik.values.age}
-                    // onBlur={formik.handleBlur}
+                    value={formik.values.age || ""}
                   />
                 </label>
 
@@ -206,7 +243,7 @@ function EditProfile() {
                   <textarea
                     name="about"
                     onChange={formik.handleChange}
-                    value={formik.values.about}
+                    value={formik.values.about || ""}
                     className="textarea grow"
                     placeholder="Bio"
                   ></textarea>
@@ -232,12 +269,14 @@ function EditProfile() {
         <div className="my-10">
           <UsersCard
             user={{
-              firstName: user?.firstName,
-              lastName: user?.lastName,
-              age: user?.age || "",
-              gender: user?.gender || "",
-              photoUrl: user?.photoUrl,
-              about: user?.about,
+              _id: user._id,
+              emailId: user.emailId,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              age: user.age,
+              gender: user.gender,
+              photoUrl: user.photoUrl,
+              about: user.about,
             }}
           />
         </div>

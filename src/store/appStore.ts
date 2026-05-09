@@ -3,6 +3,7 @@ import userReducer from "./userSlice";
 import feedReducer from "./feedSlice";
 import connectionReducer from "./connectionSlice";
 import requestReducer from "./requestSlice";
+import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 
 const appStore = configureStore({
   reducer: {
@@ -12,5 +13,11 @@ const appStore = configureStore({
     requests: requestReducer,
   },
 });
+
+export type RootState = ReturnType<typeof appStore.getState>;
+export type AppDispatch = typeof appStore.dispatch;
+
+export const useAppDispatch: () => AppDispatch = useDispatch;
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 
 export default appStore;
