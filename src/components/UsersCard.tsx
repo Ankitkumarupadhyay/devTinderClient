@@ -1,22 +1,25 @@
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-
 import { useDispatch } from "react-redux";
 import { removeUserFromFeed } from "../store/feedSlice";
 import { BASE_URL } from "../utils/url";
-import { toast } from "react-toastify";
-import { useEffect, useState } from "react";
+import { User } from "../types";
 
-function UsersCard({ user }) {
+interface UsersCardProps {
+  user: User;
+}
+
+function UsersCard({ user }: UsersCardProps): React.ReactElement {
   const { _id, firstName, lastName, gender, age, about, photoUrl } = user;
-  const [showButton, setShowButton] = useState(true);
+  const [showButton, setShowButton] = useState<boolean>(true);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const location = useLocation();
 
-  const handleFeed = async (status, userId) => {
+  const handleFeed = async (status: "ignored" | "interested", userId: string): Promise<void> => {
     try {
-      const res = await axios.post(
+      await axios.post(
         `${BASE_URL}/request/send/${status}/${userId}`,
         {},
         { withCredentials: true }
@@ -40,11 +43,11 @@ function UsersCard({ user }) {
         <img
           src={photoUrl}
           className="h-[280px]  object-contain w-full"
-          alt="Shoes"
+          alt="User Profile"
         />
       </figure>
       <div className="card-body h-[300px]">
-        <h2 className="card-title ">{`${firstName} ${lastName}`}</h2>
+        <h2 className="card-title ">{`${firstName} ${lastName || ""}`}</h2>
         {age && gender && <p>{`${gender} (${age})`}</p>}
         <p>{about}</p>
 

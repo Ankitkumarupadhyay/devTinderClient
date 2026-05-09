@@ -1,15 +1,20 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import Navbar from "./Navbar";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { BASE_URL } from "../utils/url";
 
-function ForgotPassword() {
-  const [email, setEmail] = useState("");
-  const [error, setError] = useState("");
-  const [showToast, setShowToast] = useState(false);
+interface ErrorResponse {
+  message?: string;
+}
 
-  const sendEmail = async () => {
+function ForgotPassword(): React.ReactElement {
+  const [email, setEmail] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [showToast, setShowToast] = useState<boolean>(false);
+
+  const sendEmail = async (): Promise<void> => {
     try {
+      setError("");
       const res = await axios.post(
         `${BASE_URL}/forgotpassword`,
         { email },
@@ -23,7 +28,8 @@ function ForgotPassword() {
         }, 4000);
       }
     } catch (err) {
-      setError(err?.response?.data?.message || "⚠️ Something went wrong!");
+      const axiosError = err as AxiosError<ErrorResponse>;
+      setError(axiosError?.response?.data?.message || "⚠️ Something went wrong!");
     }
   };
 

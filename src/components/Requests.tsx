@@ -1,19 +1,23 @@
+import React, { useEffect } from "react";
 import axios from "axios";
-import { useEffect } from "react";
-
-import { useDispatch, useSelector } from "react-redux";
-
+import { useDispatch } from "react-redux";
 import Loader from "./Loader";
 import { useNavigate } from "react-router-dom";
-import { removeRequest,addRequests } from "../store/requestSlice";
+import { useAppSelector } from "../store/appStore";
+import { removeRequest, addRequests } from "../store/requestSlice";
 import { BASE_URL } from "../utils/url";
+import { ConnectionRequest } from "../types";
 
-function Requests() {
+interface RequestsResponse {
+  data: ConnectionRequest[];
+}
+
+function Requests(): React.ReactElement {
   const dispatch = useDispatch();
-  const requests = useSelector((store) => store.requests);
+  const requests = useAppSelector((store) => store.requests);
   const navigate = useNavigate();
 
-  const reviewRequest = async (status, id) => {
+  const reviewRequest = async (status: "accepted" | "rejected", id: string): Promise<void> => {
     try {
       const res = await axios.post(
         `${BASE_URL}/request/review/${status}/${id}`,
@@ -29,9 +33,9 @@ function Requests() {
   };
 
   useEffect(() => {
-    const fetchRequests = async () => {
+    const fetchRequests = async (): Promise<void> => {
       try {
-        const res = await axios.get(
+        const res = await axios.get<RequestsResponse>(
           `${BASE_URL}/user/requests`,
           {
             withCredentials: true,
@@ -55,7 +59,7 @@ function Requests() {
       </h1>
     );
   }
-  // console.log(requests)
+
   return (
     <div className="text-center my-10">
       <h1 className="text-bold text-white text-3xl">Connection Requests</h1>
@@ -68,7 +72,7 @@ function Requests() {
 
           return (
             <div
-              key={_id}
+              key={request._id}
               className=" flex justify-between items-center m-4 p-4 rounded-lg bg-base-300  mx-auto  md:w-1/2"
             >
               <div>
@@ -80,7 +84,7 @@ function Requests() {
               </div>
               <div className="text-left mx-4">
                 <h2 className="font-bold text-xl">
-                  {firstName + " " + lastName}
+                  {firstName + " " + (lastName || "")}
                 </h2>
                 {age && gender && <p>{age + ", " + gender}</p>}
                 <p className="text-sm md:text-xl">{about}</p>

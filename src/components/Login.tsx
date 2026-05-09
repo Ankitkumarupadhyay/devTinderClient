@@ -1,5 +1,5 @@
-import axios from "axios";
-import { useState } from "react";
+import React, { useState } from "react";
+import axios, { AxiosError } from "axios";
 import { useDispatch } from "react-redux";
 import { addUser } from "../store/userSlice";
 import { useNavigate } from "react-router-dom";
@@ -11,26 +11,43 @@ import EmailSVG from "../assets/icons/Email";
 import PasswordSVG from "../assets/icons/Password";
 import EyeOpen from "../assets/icons/EyeOpen";
 import EyeClose from "../assets/icons/EyeClose";
+import { User } from "../types";
 
-function Login() {
-  const [showPassword, setShowPassword] = useState(false);
+interface LoginValues {
+  emailId?: string;
+  password?: string;
+}
+
+interface LoginResponse {
+  message: string;
+  data: User;
+}
+
+function Login(): React.ReactElement {
+  const [showPassword, setShowPassword] = useState<boolean>(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const initialValues = {
+
+  const initialValues: LoginValues = {
     emailId: "",
     password: "",
   };
 
-  const handleLogin = async (values) => {
+  const handleLogin = async (values: LoginValues): Promise<void> => {
     try {
       const formData = new FormData();
-      formData.append("emailId", values?.emailId);
-      formData.append("password", values?.password);
-      const res = await axios.post(`${BASE_URL}/login`, formData, {
-        withCredentials: true,
-        headers: { "Content-Type": "application/json" },
-      });
+      formData.append("emailId", values.emailId || "");
+      formData.append("password", values.password || "");
+
+      const res = await axios.post<LoginResponse>(
+        `${BASE_URL}/login`,
+        formData,
+        {
+          withCredentials: true,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
 
       if (res.status === 200) {
         localStorage.setItem("tinderUser", JSON.stringify(res.data.data));
@@ -39,12 +56,13 @@ function Login() {
         toast.success(res.data.message);
       }
     } catch (err) {
-      console.log(err);
-      toast.error(err?.response?.data);
+      const axiosError = err as AxiosError<string>;
+      console.log(axiosError);
+      toast.error(axiosError?.response?.data || "Login failed");
     }
   };
 
-  const formik = useFormik({
+  const formik = useFormik<LoginValues>({
     initialValues: initialValues,
     validationSchema: loginValidation,
     onSubmit: (values) => handleLogin(values),
@@ -68,8 +86,7 @@ function Login() {
                 className="grow"
                 placeholder="Email"
                 onChange={formik.handleChange}
-                value={formik.values.emailId}
-                // onBlur={formik.handleBlur}
+                value={formik.values.emailId || ""}
               />
             </label>
             {formik.errors.emailId && formik.touched.emailId && (
@@ -86,7 +103,7 @@ function Login() {
                 placeholder="Enter password"
                 className="grow"
                 onChange={formik.handleChange}
-                value={formik.values.password}
+                value={formik.values.password || ""}
               />
               <span
                 className="cursor-pointer"

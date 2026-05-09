@@ -1,5 +1,5 @@
+import React from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-
 import Body from "./components/Body";
 import Login from "./components/Login";
 import Profile from "./components/Profile";
@@ -13,7 +13,7 @@ import ResetPassword from "./components/ResetPassword";
 import ForgotPassword from "./components/ForgotPassword";
 import Signup from "./components/Signup";
 
-function App() {
+function App(): React.ReactElement {
   return (
     <>
       <Provider store={appStore}>

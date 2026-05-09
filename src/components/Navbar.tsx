@@ -1,33 +1,42 @@
+import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-
+import { useAppSelector } from "../store/appStore";
 import { removeUser } from "../store/userSlice";
 import { BASE_URL } from "../utils/url";
 import { toast } from "react-toastify";
-import { useEffect, useState } from "react";
+import { User } from "../types";
 
-function Navbar() {
-  const storeUser = useSelector((store) => store.user);
-  const [user, setuser] = useState(
-    JSON.parse(localStorage.getItem("tinderUser"))
-  );
+function Navbar(): React.ReactElement {
+  const storeUser = useAppSelector((store) => store.user);
+
+  const getLocalStorageUser = (): User | null => {
+    const raw = localStorage.getItem("tinderUser");
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as User;
+    } catch {
+      return null;
+    }
+  };
+
+  const [user, setuser] = useState<User | null>(getLocalStorageUser());
+
   useEffect(() => {
-    const localUser = JSON.parse(localStorage.getItem("tinderUser"));
-    setuser(localUser);
+    setuser(getLocalStorageUser());
   }, [storeUser]);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const handleLogout = async () => {
+  const handleLogout = async (): Promise<void> => {
     try {
       const response = await axios.post(
         `${BASE_URL}/logout`,
         {},
         { withCredentials: true }
       );
-      //if logged out successfully remove the user from store and redirect to login page
       if (response.status === 200) {
         dispatch(removeUser());
         localStorage.removeItem("tinderUser");
@@ -35,7 +44,8 @@ function Navbar() {
         navigate("/login");
       }
     } catch (err) {
-      toast.error(err.message || "Logout failed");
+      const error = err as Error;
+      toast.error(error.message || "Logout failed");
       navigate("/error");
     }
   };
@@ -59,7 +69,7 @@ function Navbar() {
               className="btn btn-ghost btn-circle avatar"
             >
               <div className="w-10 rounded-full">
-                <img src={user?.photoUrl} alt="user profile" />
+                <img src={user.photoUrl} alt="user profile" />
               </div>
             </div>
             <ul
@@ -79,7 +89,7 @@ function Navbar() {
                 <Link to="/requests">Requests</Link>
               </li>
               <li>
-                <Link onClick={handleLogout}>Logout</Link>
+                <Link to="#" onClick={(e) => { e.preventDefault(); handleLogout(); }}>Logout</Link>
               </li>
             </ul>
           </div>
